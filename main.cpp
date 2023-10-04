@@ -1,6 +1,5 @@
 #include "stdio.h"
 #include "stdlib.h"
-#include <DirectXTex.h>
 #include "TextureConverter.h"
 
 // コマンドライン引数
