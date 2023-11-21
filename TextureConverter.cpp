@@ -1,13 +1,24 @@
 #include "TextureConverter.h"
 using namespace DirectX;
 
-void TextureConverter::ConvertTextureWICToDDS(const std::string& filePath)
+void TextureConverter::ConvertTextureWICToDDS(const std::string& filePath, int numOptions, char* options[])
 {
 	// テクスチャを読み込む
 	LoadWICTextureFromFile(filePath);
 
 	// DDS形式に変換して書き出す
-	SaveDDSTextureToFile();
+	SaveDDSTextureToFile(numOptions, options);
+}
+
+void TextureConverter::OutputUsage()
+{
+	printf("画像ファイルからWIC形式からDDS形式に変換します。\n");
+	printf("\n");
+	printf("TextureConverter[ドライブ:][パス][ファイル名]\n");
+	printf("\n");
+	printf("[ドライブ:][パス][ファイル名]:変換したいWIC形式の画像ファイルを指定します。\n");
+	printf("\n");
+	printf("[-ml level]: ミップレベルを指定します。0を指定すると1x1までのフルマップチューンを生成します。\n");
 }
 
 void TextureConverter::LoadWICTextureFromFile(const std::string& filePath)
@@ -68,14 +79,16 @@ void TextureConverter::SeparateFilePath(const wstring& filePath)
 	fileName_ = exceptExt;
 }
 
-void TextureConverter::SaveDDSTextureToFile()
+void TextureConverter::SaveDDSTextureToFile(int numOptions, char* options[])
 {
 	HRESULT result;
 	ScratchImage mipChain;
+	size_t mipLevel = 0;
+
 	// ミニマップ生成
 	result = GenerateMipMaps(
 		scratchImage_.GetImages(), scratchImage_.GetImageCount(), scratchImage_.GetMetadata(),
-		TEX_FILTER_DEFAULT, 0, mipChain);
+		TEX_FILTER_DEFAULT, mipLevel, mipChain);
 	if (SUCCEEDED(result)) {
 		// イメージとメタデータを、ミニマップ版で置き換える
 		scratchImage_ = move(mipChain);
@@ -102,6 +115,15 @@ void TextureConverter::SaveDDSTextureToFile()
 	// DDSファイル書き出し
 	result = SaveToDDSFile(scratchImage_.GetImages(), scratchImage_.GetImageCount(), metadata_, DDS_FLAGS_NONE, filePath.c_str());
 	assert(SUCCEEDED(result));
+
+	// ミップマップレベル指定を検索
+	for (int i = 0; i < numOptions; i++) {
+		if (string(options[i]) == "-ml") {
+			// ミップレベル指定
+			mipLevel = stoi(options[i + 1]);
+			break;
+		}
+	}
 }
 
 std::wstring TextureConverter::ConvertMultiByteStringToWideString(const std::string& mString)

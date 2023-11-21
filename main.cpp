@@ -18,7 +18,13 @@ int main(int argc, char* argv[]) {
 		// 改行
 		printf("\n");
 	}
-	assert(argc >= NumArgument);
+
+	// コマンドライン引数指定なし
+	if (argc < NumArgument) {
+		// 使い方を表示する
+		TextureConverter::OutputUsage();
+		return 0;
+	}
 
 	// COM ライブラリ
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -27,12 +33,17 @@ int main(int argc, char* argv[]) {
 	// テクスチャコンバータ
 	TextureConverter converter;
 
+	// オプションの数
+	int numOptions = argc - NumArgument;
+	// オプション配列（ダブルポインタ）
+	char** options = argv + NumArgument;
+
 	// テクスチャ変換
-	converter.ConvertTextureWICToDDS(argv[kFilePath]);
+	converter.ConvertTextureWICToDDS(argv[kFilePath], numOptions, options);
 
 	// COM ライブラリの終了
 	CoUninitialize();
 
-	system("pause");
+	//system("pause");
 	return 0;
 }
